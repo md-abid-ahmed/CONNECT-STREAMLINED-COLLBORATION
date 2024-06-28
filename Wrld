@@ -1,21 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ChangeEvent } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Brush } from 'recharts';
 import { CSVLink } from 'react-csv';
 
-const AppOverview = () => {
-  const [apps, setApps] = useState([]);
-  const [selectedApp, setSelectedApp] = useState('');
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
-  const [dateRangeType, setDateRangeType] = useState('daily');
-  const [utilizationData, setUtilizationData] = useState([]);
-  const [processedData, setProcessedData] = useState([]);
-  const [showInsights, setShowInsights] = useState(false);
-  const [selectedInstances, setSelectedInstances] = useState([]);
-  const [instances, setInstances] = useState([]);
-  const [viewMode, setViewMode] = useState('all');
+interface App {
+  id: string;
+  name: string;
+}
+
+interface UtilizationData {
+  timestamp: string;
+  [key: string]: any;
+}
+
+const AppOverview: React.FC = () => {
+  const [apps, setApps] = useState<App[]>([]);
+  const [selectedApp, setSelectedApp] = useState<string>('');
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [dateRangeType, setDateRangeType] = useState<string>('daily');
+  const [utilizationData, setUtilizationData] = useState<UtilizationData[]>([]);
+  const [processedData, setProcessedData] = useState<UtilizationData[]>([]);
+  const [showInsights, setShowInsights] = useState<boolean>(false);
+  const [selectedInstances, setSelectedInstances] = useState<string[]>([]);
+  const [instances, setInstances] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<string>('all');
 
   useEffect(() => {
     fetchApps();
@@ -34,11 +44,12 @@ const AppOverview = () => {
   const fetchUtilizationData = async () => {
     try {
       // Fetching utilization data logic here
-
       // Assuming fetchedData is the response data
+      const fetchedData: UtilizationData[] = []; // Replace with actual fetch logic
+
       let filteredData = fetchedData.filter(data => {
         const date = new Date(data.timestamp);
-        return date >= startDate && date <= endDate;
+        return date >= startDate! && date <= endDate!;
       });
 
       if (dateRangeType === 'weekly') {
@@ -54,8 +65,8 @@ const AppOverview = () => {
     }
   };
 
-  const getWeeklyData = (data) => {
-    const startWeek = getStartOfWeek(startDate);
+  const getWeeklyData = (data: UtilizationData[]) => {
+    const startWeek = getStartOfWeek(startDate!);
     const endWeek = new Date(startWeek);
     endWeek.setDate(endWeek.getDate() + 6); // End of the week
 
@@ -65,9 +76,9 @@ const AppOverview = () => {
     });
   };
 
-  const getMonthlyData = (data) => {
-    const startMonth = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
-    const endMonth = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0); // End of the month
+  const getMonthlyData = (data: UtilizationData[]) => {
+    const startMonth = new Date(startDate!.getFullYear(), startDate!.getMonth(), 1);
+    const endMonth = new Date(startDate!.getFullYear(), startDate!.getMonth() + 1, 0); // End of the month
 
     return data.filter(item => {
       const date = new Date(item.timestamp);
@@ -75,30 +86,29 @@ const AppOverview = () => {
     });
   };
 
-  const getStartOfWeek = (date) => {
+  const getStartOfWeek = (date: Date) => {
     const day = date.getDay();
-    const diff = date.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is Sunday
     return new Date(date.setDate(diff));
   };
 
-  const processData = (data) => {
+  const processData = (data: UtilizationData[]) => {
     // Process data logic here
     setProcessedData(data);
   };
 
-  const handleDateRangeTypeChange = (type) => {
+  const handleDateRangeTypeChange = (type: string) => {
     setDateRangeType(type);
-    fetchUtilizationData();
   };
 
-  const handleInstanceChange = (instance) => {
+  const handleInstanceChange = (instance: string) => {
     const newSelectedInstances = selectedInstances.includes(instance)
       ? selectedInstances.filter(i => i !== instance)
       : [...selectedInstances, instance];
     setSelectedInstances(newSelectedInstances);
   };
 
-  const handleViewModeChange = (mode) => {
+  const handleViewModeChange = (mode: string) => {
     setViewMode(mode);
   };
 
@@ -108,7 +118,7 @@ const AppOverview = () => {
         <div className="header">
           <div className="top-row">
             <div className="app-selector">
-              <select onChange={(e) => setSelectedApp(e.target.value)} value={selectedApp}>
+              <select onChange={(e: ChangeEvent<HTMLSelectElement>) => setSelectedApp(e.target.value)} value={selectedApp}>
                 {apps.map(app => (
                   <option key={app.id} value={app.id}>{app.name}</option>
                 ))}
@@ -117,7 +127,7 @@ const AppOverview = () => {
             <div className="date-range">
               <DatePicker
                 selected={startDate}
-                onChange={(date) => setStartDate(date)}
+                onChange={(date: Date) => setStartDate(date)}
                 selectsStart
                 startDate={startDate}
                 endDate={endDate}
@@ -126,7 +136,7 @@ const AppOverview = () => {
               />
               <DatePicker
                 selected={endDate}
-                onChange={(date) => setEndDate(date)}
+                onChange={(date: Date) => setEndDate(date)}
                 selectsEnd
                 startDate={startDate}
                 endDate={endDate}
@@ -140,7 +150,7 @@ const AppOverview = () => {
               <button className={dateRangeType === 'weekly' ? 'active' : ''} onClick={() => handleDateRangeTypeChange('weekly')}>Weekly</button>
               <button className={dateRangeType === 'monthly' ? 'active' : ''} onClick={() => handleDateRangeTypeChange('monthly')}>Monthly</button>
             </div>
-            <button className="fetch-data" onClick={() => fetchUtilizationData()}>Fetch Data</button>
+            <button className="fetch-data" onClick={fetchUtilizationData}>Fetch Data</button>
           </div>
         </div>
 
@@ -169,13 +179,13 @@ const AppOverview = () => {
               <button onClick={() => setShowInsights(!showInsights)}>{showInsights ? 'Hide Insights' : 'Show Insights'}</button>
               {showInsights && (
                 <div className="insights-content">
-                  <p><strong>Average Usage:</strong> {calculateInsights().averageUsage}%</p>
-                  <p><strong>Peak Load:</strong> {peakLoad}%</p>
-                  <p><strong>Minimum Load:</strong> {minLoad}%</p>
-                  <p><strong>Cost Incurred:</strong> ${costIncurred.toFixed(2)}</p>
-                  <p><strong>Potential Savings:</strong> ${potentialSavings.toFixed(2)}</p>
-                  <p><strong>Max Usage Day:</strong> {calculateInsights().maxUsageDay}</p>
-                  <p><strong>Min Usage Day:</strong> {calculateInsights().minUsageDay}</p>
+                  <p><strong>Average Usage:</strong> {/* {calculateInsights().averageUsage}% */}</p>
+                  <p><strong>Peak Load:</strong> {/* {peakLoad}% */}</p>
+                  <p><strong>Minimum Load:</strong> {/* {minLoad}% */}</p>
+                  <p><strong>Cost Incurred:</strong> {/* ${costIncurred.toFixed(2)} */}</p>
+                  <p><strong>Potential Savings:</strong> {/* ${potentialSavings.toFixed(2)} */}</p>
+                  <p><strong>Max Usage Day:</strong> {/* {calculateInsights().maxUsageDay} */}</p>
+                  <p><strong>Min Usage Day:</strong> {/* {calculateInsights().minUsageDay} */}</p>
                 </div>
               )}
             </div>
@@ -198,7 +208,7 @@ const AppOverview = () => {
               </div>
             </div>
 
-            <CSVLink data={exportData} filename="utilization_data.csv">
+            <CSVLink data={processedData} filename="utilization_data.csv">
               <button className="export-btn">Export Data</button>
             </CSVLink>
           </>
